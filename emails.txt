@@ -1,0 +1,20 @@
+From: remitente@ejemplo.com
+To: receptor@ejemplo.com
+hola mundo
+
+From: <remitente@ejemplo.com>
+To: <receptor@ejemplo.com>
+mensaje 
+
+From: <remitente@ejemplo.com>
+To: <receptor@ejemplo.com>
+funciona
+
+From: <remitente@ejemplo.com>
+To: <receptor@ejemplo.com>
+melani es salvaje
+
+From: <remitente@ejemplo.com>
+To: <receptor@ejemplo.com>
+melani la real
+

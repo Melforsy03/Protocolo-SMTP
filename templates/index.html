@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cliente SMTP</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <style>
+        .container-flex {
+            display: flex;
+            flex-wrap: nowrap;
+            height: 100vh; /* Ocupar toda la altura de la ventana */
+        }
+
+        .form-container {
+            max-width: 40%; /* El formulario ocupa el 40% del ancho */
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .response-container {
+            flex-grow: 1; /* Los cuadros de respuesta ocupan el espacio restante */
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .response-box {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            flex: 1; /* Ocupa igual espacio vertical */
+            margin-bottom: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .response-box:last-child {
+            margin-bottom: 0;
+        }
+
+        .clear-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+        }
+    </style>
+    <script>
+        // Función para limpiar el contenido de un cuadro de respuesta
+        function clearResponse(id) {
+            document.getElementById(id).innerHTML = '';
+        }
+    </script>
+</head>
+<body class="container mt-3">
+    <div class="container-flex">
+        <!-- Formulario -->
+        <div class="form-container">
+            <h2>Cliente SMTP</h2>
+            <form method="POST" action="/send">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Usuario</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="sender" class="form-label">Remitente</label>
+                    <input type="email" class="form-control" id="sender" name="sender" required>
+                </div>
+                <div class="mb-3">
+                    <label for="recipient" class="form-label">Receptor</label>
+                    <input type="email" class="form-control" id="recipient" name="recipient" required>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Mensaje</label>
+                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Enviar Correo</button>
+            </form>
+        </div>
+        <!-- Cuadros de Respuestas -->
+        <div class="response-container">
+            <h3>Respuesta del Cliente y el Servidor</h3>
+            <div class="response-box" id="client-box">
+                <button class="btn btn-sm btn-danger clear-button" onclick="clearResponse('client-box')">Limpiar</button>
+                {{ client_logs | safe }}
+            </div>
+
+            <h3>Mensaje Enviado</h3>
+            <div class="response-box" id="server-box">
+                <button class="btn btn-sm btn-danger clear-button" onclick="clearResponse('server-box')">Limpiar</button>
+                {{ server_logs | safe }}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
