@@ -2,6 +2,8 @@ import asyncio
 import logging
 import base64
 from cryptography.fernet import Fernet
+from datetime import datetime, timedelta
+import ssl
 
 HOST = "127.0.0.1"
 PORT = 2525
@@ -12,12 +14,35 @@ MAX_EMAIL_SIZE = 52428800  # 50 MB
 VALID_USERNAME = "user"
 VALID_PASSWORD = "password"
 
+# Configuración de fuerza bruta
+MAX_FAILED_ATTEMPTS = 3
+BLOCK_TIME = timedelta(minutes=5)
+failed_attempts = {}
+
+def is_blocked(client_address):
+    # Verificar si la IP está bloqueada
+    if client_address in failed_attempts:
+        attempts, block_time = failed_attempts[client_address]
+        if attempts >= MAX_FAILED_ATTEMPTS and datetime.now() < block_time:
+            return True
+        elif datetime.now() >= block_time:
+            del failed_attempts[client_address]  # Desbloquear IP
+    return False
+
+def register_failed_attempt(client_address):
+    if client_address not in failed_attempts:
+        failed_attempts[client_address] = [0, datetime.now()]
+    failed_attempts[client_address][0] += 1
+    if failed_attempts[client_address][0] >= MAX_FAILED_ATTEMPTS:
+        failed_attempts[client_address][1] = datetime.now() + BLOCK_TIME
+        
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-# Generar una clave y configurar el cifrado
+# Leer la clave de cifrado desde el archivo
 with open("secret.key", "rb") as key_file:
     key = key_file.read()
+
 cipher_suite = Fernet(key)
 
 
@@ -78,6 +103,7 @@ async def handle_client(reader, writer):
                             decrypted_message = cipher_suite.decrypt("\n".join(email_data).encode()).decode()
                             logging.info(f"Correo recibido de {client_address}:\n{decrypted_message}")
                             save_email(mail_from, rcpt_to, decrypted_message)
+                            writer.write(b"250 OK\r\n") 
                         except Exception as e:
                             logging.error(f"Error al descifrar el mensaje: {e}")
                             writer.write(b"550 Failed to decrypt message\r\n")
@@ -119,8 +145,13 @@ def save_email(mail_from, rcpt_to, email_data):
 
 
 async def start_server():
-    server = await asyncio.start_server(handle_client, HOST, PORT)
-    logging.info(f"Servidor SMTP escuchando en {HOST}:{PORT}...")
+ # Crear contexto SSL
+    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_context.load_cert_chain(certfile="server.crt", keyfile="server.key")  # Requiere certificados
+
+    # Iniciar servidor con SSL
+    server = await asyncio.start_server(handle_client, HOST, PORT, ssl=ssl_context)
+    logging.info(f"Servidor SMTP escuchando en {HOST}:{PORT} con TLS...")
 
     async with server:
         await server.serve_forever()
